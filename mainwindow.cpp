@@ -14,7 +14,7 @@ MainWindow::MainWindow(QWidget *parent) :
 {
     ui->setupUi(this);
     ui->lineEdit->setFocus();
-    ui->lineEdit->setText("xlocate");
+    ui->treeWidget->setColumnWidth(0, 270);
 }
 
 MainWindow::~MainWindow()
@@ -36,33 +36,40 @@ void MainWindow::changeEvent(QEvent *e)
 
 void MainWindow::on_pushButton_clicked()
 {
-    QString search = ui->lineEdit->text();
+    search = ui->lineEdit->text();
 
     ui->treeWidget->clear();
+    ui->statusBar->showMessage("Searching...");
 
     QIcon icon = QFileIconProvider().icon(QString("/"));
     root = new QTreeWidgetItem(ui->treeWidget);
     root->setText(0, "/");
     root->setIcon(0, icon);
     ui->treeWidget->addTopLevelItem(root);
+    ui->treeWidget->expandItem(root);
 
-    QProcess process;
-    process.start("/usr/bin/locate", QStringList() << search, QIODevice::ReadOnly);
-
-    process.waitForFinished();
-    QByteArray output = process.readAllStandardOutput();
-    QList<QByteArray> output_list = output.trimmed().split('\n');
-
-    foreach (QByteArray path, output_list)
-    {
-        addPath(catPath(path, search));
-    }
-
-    ui->treeWidget->expandAll();
-    ui->treeWidget->resizeColumnToContents(0);
+    process = new QProcess(this);
+    connect(process, SIGNAL(readyReadStandardOutput()), this, SLOT(ReadStdoutOutput()));
+    connect(process, SIGNAL(finished(int, QProcess::ExitStatus)), this, SLOT(finished()));
+    process->start("/usr/bin/locate", QStringList() << search, QIODevice::ReadOnly);
 }
 
-QString MainWindow::catPath(QString path, QString search)
+void MainWindow::ReadStdoutOutput()
+{
+    qDebug() << "ReadStdoutOutput()";
+    while (process->canReadLine())
+    {
+        QByteArray path = process->readLine(1024).trimmed();
+        addPath(catPath(path));
+    }
+}
+
+void MainWindow::finished()
+{
+    ui->statusBar->showMessage("Finish");
+}
+
+QString MainWindow::catPath(QString path)
 {
     int i = path.lastIndexOf(search);
     i = path.indexOf('/', i);
@@ -117,6 +124,7 @@ void MainWindow::addPath(QString path)
             item->setText(3, info.lastModified().toString());
 
             ui->treeWidget->addTopLevelItem(item);
+            ui->treeWidget->expandItem(item);
             parent = item;
         }
     }
