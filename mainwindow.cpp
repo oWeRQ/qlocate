@@ -46,7 +46,6 @@ void MainWindow::on_pushButton_clicked()
     search = ui->lineEdit->text();
 
     ui->treeWidget->clear();
-    ui->lineEdit->setDisabled(true);
     ui->pushButton->setText("Stop");
     ui->statusBar->showMessage("Searching...");
 
@@ -65,12 +64,13 @@ void MainWindow::on_pushButton_clicked()
     if (ui->checkBox_limit->isChecked())
     {
         arguments << "--limit";
-        arguments << ui->lineEdit_limit->text();
+        arguments << ui->spinBox_limit->text();
     }
 
     arguments << "--quiet";
     arguments << search;
 
+    reader_count = 0;
     process = new QProcess(this);
     connect(process, SIGNAL(readyReadStandardOutput()), this, SLOT(ReadStdoutOutput()));
     connect(process, SIGNAL(finished(int, QProcess::ExitStatus)), this, SLOT(finished()));
@@ -79,33 +79,46 @@ void MainWindow::on_pushButton_clicked()
 
 void MainWindow::ReadStdoutOutput()
 {
+    reader_count++;
+
+    QTime peTimer;
+    peTimer.start();
+
     while (process->canReadLine())
     {
-        QByteArray path = process->readLine(1024).trimmed();
-        addPath(path);
-        QCoreApplication::processEvents();
+        addPath(process->readLine(1024).trimmed());
+
+        if (peTimer.elapsed() > 100)
+        {
+            peTimer.restart();
+            QCoreApplication::processEvents();
+        }
     }
 
-    if (process->state() == QProcess::NotRunning)
+    if (--reader_count == 0 && process->state() == QProcess::NotRunning)
     {
         ui->statusBar->showMessage(QString("Finish build tree: %1 ms").arg(timer.elapsed()));
+        loadInfo();
     }
 }
 
 void MainWindow::finished()
 {
-    ui->lineEdit->setDisabled(false);
     ui->pushButton->setText("Search");
     ui->statusBar->showMessage(QString("Finish search: %1 ms").arg(timer.elapsed()));
+
+    if (reader_count == 0)
+        loadInfo();
 }
 
 void MainWindow::addPath(QString path)
 {
     QTreeWidgetItem *newparent, *parent = root;
-
     QString currentpath;
 
-    foreach (QString dir, path.split('/'))
+    QStringList dir_list = path.split('/');
+
+    foreach (const QString &dir, dir_list)
     {
         if (dir.length() == 0)
             continue;
@@ -125,23 +138,15 @@ void MainWindow::addPath(QString path)
         if (newparent != NULL)
             parent = newparent;
         else
-            parent = addItem(parent, currentpath, dir,
-                             (dir.indexOf(search) != -1)
-                             );
+            parent = addItem(parent, currentpath, dir, (dir_list.last() == dir));
     }
 }
 
 QTreeWidgetItem *MainWindow::addItem(QTreeWidgetItem *parent, QString path, QString name, bool mark)
 {
-    QFileInfo info(path);
-
-    QIcon icon = QFileIconProvider().icon(info);
-    QString type = QFileIconProvider().type(info);
-
     QTreeWidgetItem *item = new QTreeWidgetItem(parent);
 
     item->setText(0, name);
-    item->setIcon(0, icon);
     item->setData(0, Qt::UserRole, path);
     if (mark)
     {
@@ -151,19 +156,42 @@ QTreeWidgetItem *MainWindow::addItem(QTreeWidgetItem *parent, QString path, QStr
         item->setTextColor(0, QColor(0, 128, 0));
     }
 
-    item->setText(1, type);
-
-    item->setText(2, QString("%1 KB").arg( int((info.size() + 1023) / 1024) ));
-
-    item->setText(3, info.lastModified().toString("ddd MMM d, hh:mm"));
-
     ui->treeWidget->addTopLevelItem(item);
     ui->treeWidget->expandItem(item);
 
     return item;
 }
 
-void MainWindow::on_treeWidget_itemDoubleClicked(QTreeWidgetItem* item, int column)
+void MainWindow::loadInfo()
+{
+    QTime peTimer;
+    peTimer.start();
+
+    QTreeWidgetItemIterator tree(ui->treeWidget);
+
+    for (QTreeWidgetItem *item; item = *tree; tree++)
+    {
+        QFileInfo info(item->data(0, Qt::UserRole).toString());
+
+        QIcon icon = QFileIconProvider().icon(info);
+        QString type = QFileIconProvider().type(info);
+
+        item->setIcon(0, icon);
+        item->setText(1, type);
+        item->setText(2, QString("%1 KB").arg( int((info.size() + 1023) / 1024) ));
+        item->setText(3, info.lastModified().toString("ddd MMM d, hh:mm"));
+
+        if (peTimer.elapsed() > 100)
+        {
+            peTimer.restart();
+            QCoreApplication::processEvents();
+        }
+    }
+
+    ui->statusBar->showMessage(QString("Finish load info: %1 ms").arg(timer.elapsed()));
+}
+
+void MainWindow::on_treeWidget_itemDoubleClicked(QTreeWidgetItem* item/*, int column*/)
 {
     QString path = item->data(0, Qt::UserRole).toString();
     QDesktopServices::openUrl(QUrl("file://" + path));

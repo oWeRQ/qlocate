@@ -33,8 +33,17 @@
     </item>
     <item row="8" column="0" colspan="3">
      <widget class="QTreeWidget" name="treeWidget">
+      <property name="animated">
+       <bool>true</bool>
+      </property>
       <property name="allColumnsShowFocus">
        <bool>true</bool>
+      </property>
+      <property name="wordWrap">
+       <bool>true</bool>
+      </property>
+      <property name="expandsOnDoubleClick">
+       <bool>false</bool>
       </property>
       <property name="columnCount">
        <number>4</number>
@@ -114,6 +123,9 @@
         <property name="text">
          <string>Regex</string>
         </property>
+        <property name="checked">
+         <bool>true</bool>
+        </property>
        </widget>
       </item>
       <item row="1" column="4">
@@ -127,18 +139,15 @@
        </widget>
       </item>
       <item row="1" column="5">
-       <widget class="QLineEdit" name="lineEdit_limit">
-        <property name="enabled">
-         <bool>true</bool>
+       <widget class="QSpinBox" name="spinBox_limit">
+        <property name="maximum">
+         <number>999999</number>
         </property>
-        <property name="sizePolicy">
-         <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
-          <horstretch>0</horstretch>
-          <verstretch>0</verstretch>
-         </sizepolicy>
+        <property name="singleStep">
+         <number>100</number>
         </property>
-        <property name="text">
-         <string>1000</string>
+        <property name="value">
+         <number>1000</number>
         </property>
        </widget>
       </item>
@@ -180,7 +189,7 @@
   <connection>
    <sender>checkBox_limit</sender>
    <signal>clicked(bool)</signal>
-   <receiver>lineEdit_limit</receiver>
+   <receiver>spinBox_limit</receiver>
    <slot>setEnabled(bool)</slot>
    <hints>
     <hint type="sourcelabel">
@@ -188,7 +197,7 @@
      <y>72</y>
     </hint>
     <hint type="destinationlabel">
-     <x>386</x>
+     <x>419</x>
      <y>73</y>
     </hint>
    </hints>

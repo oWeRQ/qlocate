@@ -21,6 +21,7 @@ protected:
     QString catPath(QString path);
     void addPath(QString path);
     QTreeWidgetItem *addItem(QTreeWidgetItem *parent, QString path, QString name, bool mark);
+    void loadInfo();
 
 private:
     Ui::MainWindow *ui;
@@ -28,9 +29,10 @@ private:
     QProcess *process;
     QString search;
     QTime timer;
+    int reader_count;
 
 private slots:
-    void on_treeWidget_itemDoubleClicked(QTreeWidgetItem* item, int column);
+    void on_treeWidget_itemDoubleClicked(QTreeWidgetItem* item/*, int column*/);
     void on_pushButton_clicked();
     void ReadStdoutOutput();
     void finished();
