@@ -32,7 +32,7 @@ private:
     int reader_count;
 
 private slots:
-    void on_treeWidget_itemDoubleClicked(QTreeWidgetItem* item/*, int column*/);
+    void on_treeWidget_itemActivated(QTreeWidgetItem* item, int column);
     void on_pushButton_clicked();
     void ReadStdoutOutput();
     void finished();

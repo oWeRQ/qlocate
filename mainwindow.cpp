@@ -15,7 +15,12 @@ MainWindow::MainWindow(QWidget *parent) :
 {
     ui->setupUi(this);
     ui->lineEdit->setFocus();
-    ui->treeWidget->setColumnWidth(0, 400);
+
+    ui->treeWidget->header()->setResizeMode(0, QHeaderView::Stretch);
+    ui->treeWidget->setColumnWidth(1, 120);
+    ui->treeWidget->setColumnWidth(2, 80);
+    ui->treeWidget->setColumnWidth(3, 120);
+
     process = NULL;
 }
 
@@ -195,7 +200,7 @@ void MainWindow::loadInfo()
     ui->statusBar->showMessage(QString("Finish load info: %1 ms").arg(timer.elapsed()));
 }
 
-void MainWindow::on_treeWidget_itemDoubleClicked(QTreeWidgetItem* item/*, int column*/)
+void MainWindow::on_treeWidget_itemActivated(QTreeWidgetItem* item, int column)
 {
     QString path = item->data(0, Qt::UserRole).toString();
     QDesktopServices::openUrl(QUrl::fromLocalFile(path));
