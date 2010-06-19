@@ -7,6 +7,7 @@
 #include <QDesktopServices>
 #include <QUrl>
 #include <QDateTime>
+#include <QTextCodec>
 
 MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
@@ -74,7 +75,7 @@ void MainWindow::on_pushButton_clicked()
     process = new QProcess(this);
     connect(process, SIGNAL(readyReadStandardOutput()), this, SLOT(ReadStdoutOutput()));
     connect(process, SIGNAL(finished(int, QProcess::ExitStatus)), this, SLOT(finished()));
-    process->start("/usr/bin/locate", arguments, QIODevice::ReadOnly);
+    process->start("/usr/bin/locate", arguments, QIODevice::ReadOnly | QIODevice::Text);
 }
 
 void MainWindow::ReadStdoutOutput()
@@ -84,14 +85,16 @@ void MainWindow::ReadStdoutOutput()
     QTime peTimer;
     peTimer.start();
 
+    QTextCodec *codec = QTextCodec::codecForName("UTF-8");
+
     while (process->canReadLine())
     {
-        addPath(process->readLine(1024).trimmed());
+        addPath(codec->toUnicode(process->readLine(1024)).trimmed());
 
         if (peTimer.elapsed() > 100)
         {
             peTimer.restart();
-            QCoreApplication::processEvents();
+            qApp->processEvents();
         }
     }
 
@@ -147,6 +150,7 @@ QTreeWidgetItem *MainWindow::addItem(QTreeWidgetItem *parent, QString path, QStr
     QTreeWidgetItem *item = new QTreeWidgetItem(parent);
 
     item->setText(0, name);
+    item->setToolTip(0, path);
     item->setData(0, Qt::UserRole, path);
     if (mark)
     {
@@ -184,7 +188,7 @@ void MainWindow::loadInfo()
         if (peTimer.elapsed() > 100)
         {
             peTimer.restart();
-            QCoreApplication::processEvents();
+            qApp->processEvents();
         }
     }
 
@@ -194,5 +198,5 @@ void MainWindow::loadInfo()
 void MainWindow::on_treeWidget_itemDoubleClicked(QTreeWidgetItem* item/*, int column*/)
 {
     QString path = item->data(0, Qt::UserRole).toString();
-    QDesktopServices::openUrl(QUrl("file://" + path));
+    QDesktopServices::openUrl(QUrl::fromLocalFile(path));
 }
