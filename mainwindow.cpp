@@ -8,6 +8,8 @@
 #include <QUrl>
 #include <QDateTime>
 #include <QTextCodec>
+#include <QMenu>
+#include <QClipboard>
 
 MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
@@ -204,4 +206,38 @@ void MainWindow::on_treeWidget_itemActivated(QTreeWidgetItem* item, int column)
 {
     QString path = item->data(0, Qt::UserRole).toString();
     QDesktopServices::openUrl(QUrl::fromLocalFile(path));
+}
+
+void MainWindow::on_treeWidget_customContextMenuRequested(QPoint pos)
+{
+    QMenu menu;
+    menu.addAction("Open", this, SLOT(itemOpen()));
+    menu.addAction("Terminal", this, SLOT(itemTerm()));
+    menu.addAction("Copy path", this, SLOT(itemCopyPath()));
+    menu.exec(QCursor::pos());
+}
+
+void MainWindow::itemOpen()
+{
+    QTreeWidgetItem* item = ui->treeWidget->currentItem();
+    if (item != NULL)
+        on_treeWidget_itemActivated(item, 0);
+}
+
+void MainWindow::itemTerm()
+{
+    QTreeWidgetItem* item = ui->treeWidget->currentItem();
+    if (item != NULL) {
+        QString path = item->data(0, Qt::UserRole).toString();
+        QProcess::startDetached("/usr/bin/x-terminal-emulator", QStringList(), path);
+    }
+}
+
+void MainWindow::itemCopyPath()
+{
+    QTreeWidgetItem* item = ui->treeWidget->currentItem();
+    if (item != NULL) {
+        QString path = item->data(0, Qt::UserRole).toString();
+        QApplication::clipboard()->setText(path);
+    }
 }

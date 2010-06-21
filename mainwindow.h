@@ -32,10 +32,14 @@ private:
     int reader_count;
 
 private slots:
+    void on_treeWidget_customContextMenuRequested(QPoint pos);
     void on_treeWidget_itemActivated(QTreeWidgetItem* item, int column);
     void on_pushButton_clicked();
     void ReadStdoutOutput();
     void finished();
+    void itemOpen();
+    void itemTerm();
+    void itemCopyPath();
 };
 
 #endif // MAINWINDOW_H
