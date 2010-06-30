@@ -16,6 +16,11 @@ MainWindow::MainWindow(QWidget *parent) :
     ui(new Ui::MainWindow)
 {
     ui->setupUi(this);
+
+    QIcon icon = QIcon::fromTheme("edit-find");
+    this->setWindowIcon(icon);
+    ui->pushButton->setIcon(icon);
+
     ui->lineEdit->setFocus();
 
     ui->treeWidget->header()->setResizeMode(0, QHeaderView::Stretch);
@@ -24,6 +29,13 @@ MainWindow::MainWindow(QWidget *parent) :
     ui->treeWidget->setColumnWidth(3, 120);
 
     process = NULL;
+
+    QStringList args = qApp->arguments();
+
+    if (args.count() > 1) {
+        ui->lineEdit->setText(args.at(1));
+        ui->pushButton->click();
+    }
 }
 
 MainWindow::~MainWindow()
@@ -65,7 +77,7 @@ void MainWindow::on_pushButton_clicked()
 
     if (ui->checkBox_basename->isChecked())
         arguments << "--basename";
-    if (ui->checkBox_ignorecase->isChecked())
+    if ( ! ui->checkBox_casesensitive->isChecked())
         arguments << "--ignore-case";
     if (ui->checkBox_regex->isChecked())
         arguments << "--regex";
@@ -204,8 +216,7 @@ void MainWindow::loadInfo()
 
 void MainWindow::on_treeWidget_itemActivated(QTreeWidgetItem* item, int column)
 {
-    QString path = item->data(0, Qt::UserRole).toString();
-    QDesktopServices::openUrl(QUrl::fromLocalFile(path));
+    itemOpen();
 }
 
 void MainWindow::on_treeWidget_customContextMenuRequested(QPoint pos)
@@ -221,13 +232,17 @@ void MainWindow::itemOpen()
 {
     QTreeWidgetItem* item = ui->treeWidget->currentItem();
     if (item != NULL)
-        on_treeWidget_itemActivated(item, 0);
+    {
+        QString path = item->data(0, Qt::UserRole).toString();
+        QDesktopServices::openUrl(QUrl::fromLocalFile(path));
+    }
 }
 
 void MainWindow::itemTerm()
 {
     QTreeWidgetItem* item = ui->treeWidget->currentItem();
-    if (item != NULL) {
+    if (item != NULL)
+    {
         QString path = item->data(0, Qt::UserRole).toString();
         QProcess::startDetached("/usr/bin/x-terminal-emulator", QStringList(), path);
     }
@@ -236,7 +251,8 @@ void MainWindow::itemTerm()
 void MainWindow::itemCopyPath()
 {
     QTreeWidgetItem* item = ui->treeWidget->currentItem();
-    if (item != NULL) {
+    if (item != NULL)
+    {
         QString path = item->data(0, Qt::UserRole).toString();
         QApplication::clipboard()->setText(path);
     }
