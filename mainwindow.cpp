@@ -162,7 +162,6 @@ QTreeWidgetItem *MainWindow::addItem(QTreeWidgetItem *parent, QString path, QStr
         QFont font;
         font.setBold(true);
         item->setFont(0, font);
-        item->setTextColor(0, QColor(0, 128, 0));
     }
 
     ui->treeWidget->addTopLevelItem(item);
@@ -188,7 +187,9 @@ void MainWindow::loadInfo()
         item->setIcon(0, icon);
         item->setText(1, type);
         item->setText(2, QString("%1 KB").arg( int((info.size() + 1023) / 1024) ));
+        item->setTextAlignment(2, Qt::AlignRight);
         item->setText(3, info.lastModified().toString("ddd MMM d, hh:mm"));
+        item->setTextAlignment(3, Qt::AlignRight);
 
         if (peTimer.elapsed() > 100)
         {
